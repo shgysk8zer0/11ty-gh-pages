@@ -31,33 +31,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          lfs: true
+          submodule: true
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18.13.0"
+          node-version-file: '.nvmrc'
           cache: npm
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
       - name: Setup Pages
         uses: actions/configure-pages@v3
         with:
           static_site_generator: 11ty
       - name: Restore cache
         uses: actions/cache@v3
+        # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+        id: npm-cache
         with:
-          path: |
-            dist
-            .11ty
-          key: ${{ runner.os }}-11ty-build-${{ hashFiles('dist') }}
-          restore-keys: |
-            ${{ runner.os }}-11ty-build-
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
       - name: Install dependencies
-        run: npm ci
-      - name: Static HTML export with Eleventy
-        run: npm run build && npm run build:site
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build assets
+        run: npm run build --if-present
+      - name: Build site
+        run: npm run build:site --if-present
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload `_site/`
           path: './_site'
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v2
