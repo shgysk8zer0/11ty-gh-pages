@@ -62,7 +62,7 @@ jobs:
       - name: Build site
         run: npm run build:site --if-present
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           # Upload `_site/`
           path: './_site'
